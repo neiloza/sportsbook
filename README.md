@@ -101,6 +101,13 @@ markup), results, pick'em grading, player search, the squad builder, invite
 links, Premium leagues with QR, and the offline copy. `EXPECTED_CHECKS` is a
 floor — raise it when adding checks.
 
+```bash
+SB_LIVE_API=http://localhost:8080 npm run test:live
+```
+
+The same journeys against a real, demo-seeded server, with no stub in
+between — the only test here that fails if the app and the server disagree.
+
 ## Icons
 
 ```bash

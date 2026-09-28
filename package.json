@@ -7,7 +7,8 @@
     "test": "node --test test/unit.test.mjs && node test/smoke.mjs",
     "icons": "node icons/build-icons.cjs",
     "serve": "python3 -m http.server 8000",
-    "test:unit": "node --test test/unit.test.mjs"
+    "test:unit": "node --test test/unit.test.mjs",
+    "test:live": "node test/live.mjs"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",

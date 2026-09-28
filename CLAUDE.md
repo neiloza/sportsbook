@@ -48,11 +48,14 @@ The app (this repo):
 - **Offline:** every public read falls back to the last good answer, marked
   "offline". Private answers are never cached.
 - **Tests:** `npm test` = 18 unit tests + 56 browser checks under the real
-  `_headers` CSP, against a contract-derived stub.
+  `_headers` CSP, against a contract-derived stub. `npm run test:live`
+  drives the app against a REAL local server (8/8 on 2026-09-28, demo
+  data); it is skipped unless `SB_LIVE_API` is set.
 
 The server (GameHub repo, `setup/accounts/service/src/apps/sportsbook/`,
-branch `claude/eager-gates-uegaim`): see `setup/accounts/SPORTSBOOK.md`
-there. Built inside `woz-accounts` (decision D7) with an `ingest` process
+branch `claude/eager-gates-uegaim`, pushed, not merged): see
+`setup/accounts/SPORTSBOOK.md` there. Its `npm test` is 140/140 with the
+Postgres integration suite (26 tests over HTTP, every route in API.md). Built inside `woz-accounts` (decision D7) with an `ingest` process
 group, an ESPN adapter, and a demo-data seed.
 
 **Not built:** soccer data (competitions are registered but disabled), NFL
@@ -418,6 +421,19 @@ box that is not true is worse than an open one.
   an assumption rather than stating it as fact.
 
 ## Testing
+
+Three layers, each catching what the one before cannot:
+
+| Command | Proves | Cannot prove |
+|---|---|---|
+| `npm test` (unit + smoke) | the rules, the shell, every screen against the contract | that the server honours the contract |
+| `npm run test:live` with `SB_LIVE_API` | the app and the real server agree | that ESPN's data looks like the adapter thinks |
+| GameHub `scripts/sportsbook-probe.mjs` | the adapter against live ESPN | — needs a networked machine |
+
+Running the live test: in GameHub `setup/accounts/service`, with the local
+Postgres, `DATABASE_URL=… PGSSL=disable node scripts/sportsbook-seed-demo.mjs`
+then `ALLOW_LOCALHOST=1 COOKIE_DOMAIN= PORT=8080 node src/index.js`; here,
+`SB_LIVE_API=http://localhost:8080 npm run test:live`.
 
 <!-- Serve the folder and drive it with Playwright:
        python3 -m http.server 8137

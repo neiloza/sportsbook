@@ -122,6 +122,34 @@ A league is either `pickem` (predict winners of every game in the comp) or
 | `GET /v1/sb/league/picks?id=&week=` | Members only. `{ week, events: Event[], mine: { [event_id]: "home"|"away"|"draw" }, others: [{ user_id, name, picks: {…} }] }` — **others' picks for an event are included only once that event has started** |
 | `POST /v1/sb/league/picks` `{ id, event_id, pick }` | `{ ok: true }` or 409 if the event has started (**server clock, `start_time`**). `pick: "draw"` only when the comp allows draws |
 
+## Settled in implementation (2026-09-28)
+
+Where the server had to decide something this file left open, or changed
+it for a reason. The app matches all of these.
+
+1. **Prices run ≈ 4.0 – 18.0.** A top QB ≈ 17, top RB/WR ≈ 15.5–16, top TE
+   ≈ 12, bench players at the 4.0–4.5 floor. At the first draft of the scale
+   eight stars cost ≈ 86, so the 100.0 budget never bound; the ratios were
+   kept and the scale raised. Points per game divide by the TEAM's games
+   played, so a benched backup prices at the floor rather than at a
+   position default. Rule and table: `pricing.js` and its tests.
+2. **Leaderboard rows gain `lineup` and `captain` once the week has locked**
+   (absent before the deadline, so nobody can copy a rival's squad).
+3. **`breakdown[].pts` already includes the captain's doubling.** Sum it and
+   you get `points`.
+4. **Player season totals count final games only.** The game log also lists
+   a live game, with `result` like `"Live 10-7"`.
+5. **A league you are not in is a 404, exactly like one that does not exist**
+   — a private league's existence is not confirmed to outsiders.
+   **Leaving needs only sign-in, not Premium**: a refunded user must never be
+   trapped in a league.
+6. **Member names** are the account's display name, else a claimed squad
+   nickname, else "Member". Emails are never shown to other members.
+7. **Squad-league standings** carry `correct: null, graded: null`. A member
+   with several claimed handles counts their best entry each week.
+8. **Omitted `week`:** `squad/pool` and `squad/entry` use the open week (the
+   first whose deadline is still ahead); `league/picks` uses the current week.
+
 ## What the server stores (for reference)
 
 `sb_competitions, sb_teams, sb_players, sb_events, sb_player_event_stats,
