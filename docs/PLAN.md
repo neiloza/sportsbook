@@ -1,6 +1,6 @@
 # Sportsbook — build plan
 
-*Drafted 2026-09-28. Status: **Phase 0 in progress** — see
+*Drafted 2026-09-28. Status: **Phases 0–5 built, NFL first** (2026-09-28) — see
 [Decision log](#decision-log). Nothing is built yet.*
 
 Built to the house rules in `neiloza/GameHub` → `setup/` (called **setup/**
@@ -361,4 +361,5 @@ room, and is in season. NFL fantasy is the biggest and riskiest feature.
 | D5 | Native proximity | No; share sheet + QR + code |
 | D6 | News | RSS headlines linking out; no article bodies |
 | D7 | Server | Inside `woz-accounts`, with a separate `ingest` process group |
+| D9 | Starting sport | **NFL only at first** (2026-09-28). Soccer competitions are registered but disabled. The free budget-style squad game was built for NFL first — QB, 2 RB, 3 WR, TE, FLEX under 100.0, captain ×2, locks at the week's first kickoff — and will take the Premier League rules when soccer data arrives |
 | D8 | Display name, colour, icon | Colours **green, white, brown, gold**, in that order of weight. Icon: **a football on a green field**. Name "Sportsbook" for now |

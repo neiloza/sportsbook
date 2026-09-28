@@ -25,40 +25,67 @@ cause.** Say which one you have.
 
 ## Current status (as of 2026-09-28)
 
-Phase 0 has started. The plan, and every decision taken so far, is in
-[`docs/PLAN.md`](./docs/PLAN.md). Read it before building anything.
+**Phases 0–5 of [`docs/PLAN.md`](./docs/PLAN.md) are built, with NFL as the
+starting sport.** Nothing has run against a real data provider or a
+deployed server yet — see *Waiting on a human*.
 
-Built so far:
-- Scaffolded from GameHub `setup/starter-kit` (`new-app.sh`); `npm test`
-  passes 32/32 (the kit's 26 shell checks + 6 Sportsbook checks).
-- **Palette:** green, white, brown, gold, in that order of weight. The
-  reasoning is in `css/tokens.css`, including why the chrome is white rather
-  than green, and the deliberate exception that the brand is green even
-  though green is also the semantic "good" colour.
-- **Icon:** a football on a green field (`icons/source.svg`), generated to the
-  full set and byte-verified opaque.
-- **Five-tab shell:** News · Scorecard · Favorites (centre, opens on launch) ·
-  Fantasy · Players. Settings is a view opened from the topbar gear. Every
-  view is still an empty state.
-- The build number shows in Settings, read from the worker's cache name.
+The app (this repo):
+- **Five tabs**, all working against the API in [`docs/API.md`](./docs/API.md):
+  News (scores + headlines, sport filter), Scorecard (results by week +
+  Pick'em), Favorites (onboarding team picker, then a feed), Fantasy (squad
+  game + mini-leagues), Players (search + profile). Settings behind the gear.
+- **Pick'em** is local-first: picks lock at kickoff, grade themselves when the
+  app sees the final, and feed a record / streak / weekly chart. A Premium
+  user's picks are also sent to their pick'em leagues, where the server
+  enforces the lock.
+- **Squad game** (free, budget style, adapted from the soccer design because
+  NFL came first): QB, 2 RB, 3 WR, TE, FLEX under 100.0, max 3 per team,
+  captain ×2, locks at the week's first kickoff. Anonymous handle, global
+  leaderboard.
+- **Premium** (sign-in + $5): pick'em leagues and squad mini-leagues (create,
+  join by code / `?join=` link / share sheet / QR), and cloud save of
+  favorites, picks and settings with per-id newest-wins merges.
+- **Offline:** every public read falls back to the last good answer, marked
+  "offline". Private answers are never cached.
+- **Tests:** `npm test` = 18 unit tests + 56 browser checks under the real
+  `_headers` CSP, against a contract-derived stub.
 
-Not built: every tab's content, the sport registry, and all server work
-(Phase 1, which goes in the GameHub repo under `setup/accounts/service`).
+The server (GameHub repo, `setup/accounts/service/src/apps/sportsbook/`,
+branch `claude/eager-gates-uegaim`): see `setup/accounts/SPORTSBOOK.md`
+there. Built inside `woz-accounts` (decision D7) with an `ingest` process
+group, an ESPN adapter, and a demo-data seed.
+
+**Not built:** soccer data (competitions are registered but disabled), NFL
+snake-draft leagues (Phase 6), push notifications, the licensed-provider
+adapter.
 
 ## Open issues
 
-<!-- Known-broken, known-missing, and known-dubious. Each one: what is wrong,
-     why it matters, and what the fix would look like. An issue with no
-     consequence stated gets deprioritised forever. -->
+- **The ESPN adapter has never seen a real ESPN response.** This sandbox's
+  network policy blocks the host, so the adapter and its fixtures were
+  written from the same understanding — a regression guard, not evidence
+  (LESSONS P5). The probe script in GameHub settles it.
+- **The API stub in `test/fixtures/sb-api.mjs` is written from `docs/API.md`**,
+  as the app is. It catches the app drifting from the contract; only the
+  server's integration test (GameHub) catches the server drifting.
+- **The CSP blocks `?api=` overrides in production** (connect-src lists one
+  origin). Deliberate: the override is for local development, where
+  `_headers` is not applied by `npm run serve`.
+- **Squad-game rules exist twice**: the server validates (authoritative);
+  `logic.js` mirrors them only to grey out impossible picks. A drift costs a
+  confusing server message, never a wrong lineup.
 
 ## What to do next
 
-<!-- Ordered by leverage — the top of the list unlocks the most for the least
-     effort. -->
-
-1.
-2.
-3.
+1. Run the ESPN probe from a networked machine (see Waiting on a human) and
+   fix whatever the adapter got wrong, before anything else touches data.
+2. Phase 6: NFL snake-draft leagues (SSE draft room, rosters, lineups,
+   matchups) — the Fantasy tab already says it is coming.
+3. Soccer: enable `eng.1` etc. in the server registry once its adapter is
+   written and probed; the app picks it up with no release. Draw picks are
+   already supported.
+4. Swap the ESPN adapter for a licensed provider before public launch
+   (docs/PLAN.md §4).
 
 ## Waiting on a human
 
@@ -91,6 +118,38 @@ box that is not true is worse than an open one.
 
 <!-- The three below are real: a freshly scaffolded app is blocked on all of
      them. Delete each as you complete it. -->
+
+- [ ] **Run the ESPN probe from a machine with internet access.** The data
+      adapter has never parsed a real ESPN response — this sandbox cannot
+      reach ESPN — so every field path in it is an assumption. Until this
+      runs, "the scores are right" is unverified.
+      *Agent cannot: network policy blocks site.api.espn.com.*
+      1. In the GameHub repo: `cd setup/accounts/service && npm install`
+      2. `node scripts/sportsbook-probe.mjs` — it fetches the live endpoints,
+         runs the real adapter, and prints what parsed and what came back
+         empty.
+      3. Paste the output into a session and have the adapter fixed.
+      Trap: a field that parses to `0` rather than failing looks healthy.
+      Read the probe's per-field counts, not just its exit code.
+
+- [ ] **Merge the GameHub branch `claude/eager-gates-uegaim`** once reviewed.
+      The whole server half of this app lives there; until it is on `main`,
+      a deploy of `woz-accounts` does not include Sportsbook.
+      *Agent cannot: merging to another repo's main is your call.*
+
+- [ ] **Deploy `woz-accounts` for the first time, with the ingest process.**
+      No live data reaches the app until this happens — it has never been
+      deployed (GameHub `setup/README`). Follow `setup/accounts/SETUP.md`,
+      then `fly scale count ingest=1` so exactly one poller runs.
+      Trap: two ingest machines is safe (an advisory lock makes the second
+      idle) but wasted money.
+
+- [ ] **Choose and pay for a licensed data provider before anyone else uses
+      the app.** ESPN's endpoints are undocumented and Disney's terms forbid
+      automated and commercial use — fine for a private build, not for a
+      public one. Front-runner: BALLDONTLIE (≈ $9.99/sport/month, allows
+      fantasy use; verify current pricing). Put the key in `fly secrets`,
+      never in a repo.
 
 - [ ] **Create the hosting project and point the subdomain at it.** Until this
       exists there is no URL, so nothing here can be installed to a phone or
@@ -164,8 +223,20 @@ box that is not true is worse than an open one.
 | `css/tokens.css` | The palette. Retheming happens here and nowhere else. |
 | `css/base.css` | Reset, safe areas, dvh, motion, focus |
 | `css/components.css` | Shared shell vocabulary |
-| `css/app.css` | Sportsbook's own styles: gold active-tab marker, topbar fit |
-| `js/app.js` | App entry, wiring |
+| `css/app.css` | Sportsbook's own styles: every screen component |
+| `js/app.js` | App entry, the shared `ctx`, cloud-save documents |
+| `js/api.js` | Every API call: 20 s deadline, offline copy, private answers never cached |
+| `js/logic.js` | Pure rules: grading, streaks, favorites/picks merges, squad checks, codes |
+| `js/dom.js` | `el()` (text, never markup), event card, badges, shared widgets |
+| `js/sports.js` | Sport registry as the app sees it (server decides `enabled`) |
+| `js/views/news.js` · `scorecard.js` · `favorites.js` · `fantasy.js` · `players.js` · `settings.js` | One screen each |
+| `js/views/details.js` | Game / player / team sheets, openable from any tab |
+| `js/views/leagues.js` | Premium leagues: create, join, invite (share, QR, code), standings |
+| `js/vendor/qrcode.mjs` | QR encoder, vendored unmodified (MIT, Kazuhiko Arase, v2.0.4) |
+| `_headers` | Production CSP + cache headers; the smoke test serves through it |
+| `test/unit.test.mjs` | Pure-rule tests + SHELL import-graph check |
+| `test/smoke.mjs` · `test/fixtures/sb-api.mjs` | Browser checks + the contract-derived API stub |
+| `docs/API.md` | The contract with the server. Change both halves AND this file |
 | `js/store.js` | Persistence: `sportsbook:v1`, migrations |
 | `js/install.js` | Add-to-home-screen decision table + sheet |
 | `js/ui.js` | View switching, sheets, toasts |
@@ -208,6 +279,26 @@ box that is not true is worse than an open one.
 - **An enum value the UI no longer recognises reads as lost data.** A record
   whose category no longer exists renders nowhere at all. Translate legacy
   values once, on load, with a catch-all fallback.
+
+### Sportsbook's own
+
+- **API text is rendered as text.** Headlines come from a third-party feed;
+  `el()` in `js/dom.js` turns string children into text nodes. Never build
+  markup from API data with `innerHTML` — the smoke test plants an `<img
+  onerror>` headline to catch exactly that.
+- **Only public answers are cached, and never an empty one.** `getPublic`
+  writes the `sportsbook-data` cache; `callPrivate` never does. An empty
+  answer is not cached, so "the network failed" cannot become "no games".
+- **`sw.js` spares `sportsbook-data` on activate.** Deleting it on each deploy
+  would throw away everyone's offline copy.
+- **A graded pick is written once.** A later stat correction does not flip a
+  pick back and forth; history is what the app saw at the final.
+- **Favorites are id → { on, at } with tombstones**, and cloud save merges
+  them newest-wins per id (`mergeFavorites`). Deleting keys instead of
+  writing `on: false` brings un-starred teams back from the other device.
+- **The server is authoritative for squad lineups and league-pick locks.**
+  The app's checks are UX hints; never skip the server call because the
+  client "already validated".
 
 ### The worker and the deploy
 
