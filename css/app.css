@@ -278,3 +278,8 @@
   .team-toggle:hover { border-color: var(--line-strong); }
   .pick-btn:not(:disabled):not(.picked):hover { border-color: var(--accent); color: var(--accent); }
 }
+
+/* Panels stacked directly in a view need air between them; the kit's .panel
+ * carries none, because inside a sheet it is usually alone. */
+.view > .panel, .section > .panel, .view > div > .panel { margin-bottom: 12px; }
+.slot-empty { grid-row: 1 / span 2; align-self: center; }

@@ -1,0 +1,28 @@
+# Cloudflare Pages response headers. The smoke test serves the app through
+# THIS FILE (test/smoke.mjs parses it), because a CSP strict enough to matter
+# is strict enough to break the app, and the alternative is finding out on a
+# phone with no console open (setup/LESSONS.md 1.6).
+#
+# connect-src: the one API origin. Sign-in and checkout are navigations to
+# that origin and to Stripe, not fetches, so they need no entry here.
+# img-src: 'self' and data: only. Team badges are drawn, not downloaded — no
+# logo CDN, so a free user makes zero third-party requests (house rule 7).
+# style-src 'unsafe-inline': the QR code is an SVG string from the vendored
+# encoder, parsed as markup; its attributes are presentational only.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.thewizardofoza.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://api.thewizardofoza.com
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# A worker served from cache outlives the deploy meant to replace it.
+/sw.js
+  Cache-Control: no-store, must-revalidate
+
+/js/*
+  Cache-Control: max-age=0, must-revalidate
+/css/*
+  Cache-Control: max-age=0, must-revalidate
+
+/manifest.webmanifest
+  Content-Type: application/manifest+json

@@ -38,6 +38,32 @@ const TYPES = {
   ".svg": "image/svg+xml", ".png": "image/png",
 };
 
+/* The production headers, parsed from _headers (Cloudflare Pages format:
+ * a path line, then indented "Name: value" lines). Only "/*" and exact or
+ * trailing-* paths are supported, which is all that file uses. */
+async function loadHeaders() {
+  let text = "";
+  try { text = await readFile(join(ROOT, "_headers"), "utf8"); } catch { return []; }
+  const rules = [];
+  let cur = null;
+  for (const line of text.split("\n")) {
+    if (!line.trim() || line.trim().startsWith("#")) continue;
+    if (!/^\s/.test(line)) { cur = { path: line.trim(), headers: {} }; rules.push(cur); continue; }
+    const i = line.indexOf(":");
+    if (cur && i > 0) cur.headers[line.slice(0, i).trim()] = line.slice(i + 1).trim();
+  }
+  return rules;
+}
+const HEADER_RULES = await loadHeaders();
+function headersFor(urlPath) {
+  const out = {};
+  for (const r of HEADER_RULES) {
+    const hit = r.path.endsWith("*") ? urlPath.startsWith(r.path.slice(0, -1)) : urlPath === r.path;
+    if (hit) Object.assign(out, r.headers);
+  }
+  return out;
+}
+
 /* A static server small enough to not be a dependency. */
 function serve() {
   const server = createServer(async (req, res) => {
@@ -52,6 +78,9 @@ function serve() {
         // The worker must never be served from cache, or a bad one outlives
         // the deploy meant to replace it. Same reasoning as production.
         "Cache-Control": "no-store",
+        // Then the production headers, CSP included, so a policy that would
+        // break the app breaks this test first.
+        ...headersFor(req.url.split("?")[0]),
       }).end(body);
     } catch {
       res.writeHead(404).end("not found");
@@ -310,6 +339,9 @@ check("signed out by default, so nothing is unlocked for free",
 
 console.log("\nsportsbook shell");
 
+check("the page is served with the production CSP from _headers",
+  ((await (await fetch(base)).headers.get("content-security-policy")) ?? "").includes("connect-src 'self' https://api.thewizardofoza.com"));
+
 /* Reload first: the shell section above clicked a tab, so the view showing
  * now says nothing about what the app opens on. */
 await page.goto(base, { waitUntil: "networkidle" });
@@ -516,7 +548,7 @@ check("no console errors, page errors or 4xx", problems.length === 0,
  * broken offline cache looked like when that was tried on purpose. Raise
  * this whenever you add checks.
  */
-const EXPECTED_CHECKS = 55;
+const EXPECTED_CHECKS = 56;
 const failed = results.filter((r) => !r.pass);
 console.log(`\n${results.length - failed.length}/${results.length} passed\n`);
 if (results.length < EXPECTED_CHECKS) {
