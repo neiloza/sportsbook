@@ -1,0 +1,120 @@
+/* ============================================================================
+ * base.css — reset, page geometry, and the accessibility floor.
+ *
+ * Everything here was paid for in debugging somewhere in Liberty, Forest,
+ * Popcorn, SlotMachine or Clash. Read the comments before removing a rule.
+ * ========================================================================= */
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The authoritative background belongs on <html>, not just <body>.
+ *
+ * Anything outside the body box — the status-bar strip above a standalone iOS
+ * app, the overscroll area, the safe-area insets — paints from the ROOT
+ * element. With the colour only on <body>, iOS shows a pale band across the
+ * very top of the screen where the canvas shows through.
+ *
+ * If your app has a gradient rather than a flat colour, do NOT use
+ * `background-attachment: fixed` here: combined with viewport-fit=cover it
+ * can leave a real gap at the bottom on iOS, exposing this flat fallback.
+ * Use a dedicated `position: fixed` element that overshoots the viewport on
+ * every side instead (fixed elements are always clipped to the true viewport,
+ * so overshooting is free). Keep a flat fallback colour here regardless. */
+html {
+  background: var(--bg);
+  color-scheme: light;
+  height: 100%;
+  /* On the DOCUMENT, not just body. One overflowing child — a fixed-width
+   * row, an unbreakable string — otherwise drags the whole page sideways and
+   * takes the fixed bottom nav with it, which reads as the navigation
+   * breaking rather than as a layout bug. */
+  overflow-x: hidden;
+  /* iOS Safari zooms an input on focus if its font-size is under 16px. */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  /* dvh, not vh: fills the real visual viewport including the home-indicator
+   * area, so a fixed bottom:0 nav lands on the actual screen edge instead of
+   * short of it. */
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+
+  background: transparent;   /* html owns the background */
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* This is a tap-driven app, not a document. Long-pressing or dragging over a
+ * card title, a tab label or a chip starts a text selection and leaves a
+ * highlight sitting there, which reads as a glitch rather than a feature.
+ *
+ * IF YOU ARE BUILDING A READING APP, DELETE THIS BLOCK. Selection is the
+ * whole point there. Liberty deliberately does not do this. */
+body {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* …and the places that opt back in. Inputs always: you cannot correct text
+ * you cannot put a cursor in. Add any long-form or copy-worthy text here —
+ * copying an exact title to paste into a search is a real thing people do. */
+input,
+textarea,
+[data-selectable] {
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
+}
+
+h1, h2, h3 { font-family: var(--font-display); }
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  touch-action: manipulation;
+}
+
+img, svg { max-width: 100%; }
+
+/* Focus that is visible on any theme without being loud. `:where()` keeps
+ * specificity at zero so any component can still override it. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Respect the notch and the home indicator. */
+.safe-bottom { padding-bottom: max(0.5rem, var(--safe-b)); }
+.safe-top    { padding-top: max(0.5rem, var(--safe-t)); }
+
+.hidden { display: none !important; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Blanket motion kill-switch. The alternative house pattern is to invert it —
+ * put every animation inside `@media (prefers-reduced-motion: no-preference)`
+ * so motion is opt-in rather than opt-out. That is stricter and better for a
+ * new app; this form is here because it is the one that can be retrofitted
+ * safely onto code that already animates. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

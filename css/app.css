@@ -1,0 +1,45 @@
+/* ============================================================================
+ * app.css — Sportsbook's own styles, on top of the kit's components.css.
+ *
+ * Colour comes only from tokens.css. If a value here looks like it wants a
+ * hex code, it wants a token instead.
+ * ========================================================================= */
+
+/* The brand name carries the turf green: the one place green is used as
+ * type rather than as something to press. */
+.brand-name { color: var(--accent); }
+
+/* --- tab bar -------------------------------------------------------------
+ * The active tab gets a gold bar along its top edge, over the green label.
+ * The bar is gold because gold is the highlight colour in this palette. It
+ * is a FILL, so --gold's 2.4:1 contrast on white does not matter here; the
+ * label under it stays green and passes on its own.
+ *
+ * `position: relative` is needed for the ::before; the kit's .tab has none. */
+.tab { position: relative; }
+.tab.active::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 28%;
+  right: 28%;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--gold);
+}
+
+/* Five labels at 375px: "Scorecard" is the longest, and at the kit's 0.7rem
+ * it fits with room to spare. If a label is ever renamed to something
+ * longer, check 375×667 before shipping — it will truncate, not wrap. */
+.tab-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+/* --- topbar --------------------------------------------------------------
+ * This topbar carries one more button than the kit's (the Settings gear),
+ * and at 390px that was enough to truncate the brand to "Sport…". So the
+ * Install label drops away below 430px instead of the kit's 380px, and the
+ * Account button runs tighter. Re-check 375×667 if a button is ever added. */
+#account-btn { padding-inline: 12px; }
+@media (max-width: 430px) {
+  .install-btn-label { display: none; }
+  .install-btn { padding: 8px 10px; }
+}

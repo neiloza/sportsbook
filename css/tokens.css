@@ -1,0 +1,144 @@
+/* ============================================================================
+ * tokens.css — the palette contract.
+ *
+ * This is the ONE file you rewrite when you retheme an app. Everything else
+ * in the kit consumes these names and never hard-codes a colour, a radius or
+ * a shadow. Keep the names; change the values.
+ *
+ * Name tokens by ROLE, not by hue, wherever the role can outlive the colour.
+ * `--accent` is "the thing you press", not "the blue one" — so when the blue
+ * becomes near-black the name still tells the truth.
+ *
+ * Keep the brand-weight palette small: one accent, one surface ramp, one ink
+ * ramp. Red and green are semantic (yes/no, win/lose, safe/destructive) and
+ * never carry brand weight. A palette with fifteen equal colours means
+ * nothing.
+ *
+ * When a value is non-obvious — a colour that has to sit in a narrow band to
+ * read correctly, two tokens that must move together — write the paragraph
+ * here. That comment is what stops a future session "tidying" it back into a
+ * bug.
+ * ========================================================================= */
+
+:root {
+  /* ==========================================================================
+   * Sportsbook palette — decided 2026-09-28: GREEN, WHITE, BROWN, GOLD, in
+   * that order of weight. The concept is a football on a field: turf green,
+   * chalk-line white, leather brown, trophy gold.
+   *
+   *   green  — the brand and "the ink you press": primary buttons, the active
+   *            tab, selected chips, the brand name. Most of the colour on screen.
+   *   white  — every surface. The app reads as white paper with green on it,
+   *            not as a green app, so long stat tables stay easy to read.
+   *   brown  — the ink ramp. Body text is a near-black brown rather than a
+   *            neutral black, which is how brown carries weight without
+   *            being a fill colour.
+   *   gold   — the highlight: the active-tab marker, favourite stars, a
+   *            correct pick, a leaderboard top spot. Used sparingly, and see
+   *            the contrast note on --gold before using it for text.
+   *
+   * WHY THE CHROME IS WHITE AND NOT GREEN. A green topbar was the obvious
+   * move and was rejected: iOS draws the status bar over the top of the page
+   * (viewport-fit=cover) with status-bar-style "default", which means DARK
+   * glyphs. Dark glyphs on turf green are illegible, and "black-translucent"
+   * (white glyphs) is the kit's documented choice for dark-themed apps only.
+   * So the chrome stays white and the green lives in what you press.
+   * ======================================================================= */
+
+  /* --- surfaces: white, very slightly warm so brown ink sits comfortably -- */
+  --bg:            #fbfaf6;
+  --bg-raised:     #ffffff;
+  --bg-sunken:     #f1eee6;
+
+  /* --- ink: the brown ramp ----------------------------------------------
+   * --ink-faint is the lightest brown that still passes 4.5:1 on --bg; do
+   * not lighten it for "elegance" — it carries timestamps and stat labels. */
+  --ink:           #2b1d13;
+  --ink-soft:      #5b4535;
+  --ink-faint:     #7d6755;
+
+  /* --- accent: turf green, the ink you press ---------------------------- */
+  --accent:          #1f5f3b;
+  --accent-soft:     #2b7a4f;
+  --accent-contrast: #ffffff;   /* text ON accent */
+
+  /* --- the two named brand colours beyond green ------------------------
+   * --brown is the football itself: leather. For the icon, badges and the
+   * odd illustrative fill, never for body text (that is --ink).
+   *
+   * --gold is a FILL colour. At #c9a227 it is about 2.4:1 on white, so it
+   * fails as text. Gold text on a white surface uses --gold-ink instead,
+   * which is the same hue darkened to pass 4.5:1. Gold on green (the icon,
+   * a green banner) uses --gold directly and passes for large text. */
+  --brown:         #7a4a26;
+  --gold:          #c9a227;
+  --gold-ink:      #85690f;
+  --gold-bg:       #f7efd2;
+
+  /* --- structure --------------------------------------------------------- */
+  --line:          #e6e1d6;
+  --line-strong:   #cdc5b5;
+
+  /* --- semantic only. Never brand. --------------------------------------
+   * A DELIBERATE EXCEPTION TO THE KIT: the kit says green never carries
+   * brand weight, because green means "yes / win". Here the brand IS green.
+   * Two rules keep a correct pick from being confused with "brand-coloured":
+   *   1. --good is shifted toward teal, so it is a different green.
+   *   2. A result is NEVER shown by colour alone — it always carries a glyph
+   *      and a word (✓ Correct, ✗ Wrong, W / L). That is also the
+   *      colour-blind rule, so it costs nothing extra. */
+  --good:          #12706a;
+  --good-bg:       #e2f1ef;
+  --bad:           #9a2f2f;
+  --bad-bg:        #f7e7e5;
+
+  /* --- shape ------------------------------------------------------------- */
+  --radius:        16px;
+  --radius-sm:     12px;
+  --radius-pill:   999px;
+
+  --shadow-sm: 0 1px 2px rgb(43 29 19 / 0.05);
+  --shadow-md: 0 2px 6px rgb(43 29 19 / 0.06), 0 10px 24px -12px rgb(43 29 19 / 0.14);
+  --shadow-lg: 0 6px 16px rgb(43 29 19 / 0.10), 0 20px 44px -16px rgb(43 29 19 / 0.20);
+
+  /* --- type --------------------------------------------------------------
+   * System stack by default: it costs no request, never flashes, and already
+   * looks native on the device it is running on. Swap --font-display for a
+   * webfont only when the typeface is doing identity work. If you do,
+   * preconnect to both font origins in <head> — it is the only third-party
+   * request these apps are allowed to make.
+   */
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: ui-rounded, "SF Pro Rounded", var(--font-body);
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* --- safe areas --------------------------------------------------------
+   * Behind variables so every anchored element derives from ONE number, and
+   * so you can fake a notched device in a desktop browser while testing by
+   * overriding these two in devtools.
+   *
+   * NOTE: --safe-b is the iOS home indicator, NOT a browser URL bar. In a
+   * standalone PWA there is no URL bar, so nothing should ever pad on top of
+   * this value "just in case".
+   */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+
+  /* --- chrome heights, so content can clear them ------------------------ */
+  --topbar-h: 56px;
+  --tabbar-h: 58px;
+}
+
+/* ---------------------------------------------------------------------------
+ * Multi-theme, if the app wants it: redefine the SAME token names under a
+ * [data-theme] block and apply the attribute from an inline <script> in
+ * <head>, before first paint, so there is no flash. See index.html.
+ * -------------------------------------------------------------------------
+ *
+ * [data-theme="night"] {
+ *   --bg: #15131c;  --bg-raised: #1f1c2c;  --bg-sunken: #0e0c14;
+ *   --ink: #efe6d6; --ink-soft: #b3adc0;   --ink-faint: #837e93;
+ *   --line: #3a334a; --line-strong: #4d4560;
+ *   --accent: #e6c460; --accent-contrast: #15131c;
+ * }
+ */

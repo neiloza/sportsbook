@@ -1,6 +1,6 @@
 # Sportsbook — build plan
 
-*Drafted 2026-09-28. Status: **decisions taken, ready for Phase 0** — see
+*Drafted 2026-09-28. Status: **Phase 0 in progress** — see
 [Decision log](#decision-log). Nothing is built yet.*
 
 Built to the house rules in `neiloza/GameHub` → `setup/` (called **setup/**
@@ -325,7 +325,7 @@ list.
 
 | Phase | Delivers | Where | Blocked on a human? |
 |---|---|---|---|
-| **0 · Foundations** | Scaffold via `new-app.sh`; 5-tab shell, Favorites default, Settings gear, tokens, placeholder icon, build number in UI; sport registry; README / CLAUDE.md / BUGLOG | this repo | Name/colour (D8) can use placeholders |
+| **0 · Foundations** | Scaffold via `new-app.sh`; 5-tab shell, Favorites default, Settings gear, green/white/brown/gold tokens, football icon, build number in UI; sport registry; README / CLAUDE.md / BUGLOG | this repo | — |
 | **1 · Data pipeline** | `sb_` migrations, ESPN adapter + recorded fixtures, `ingest` process and scheduler, `sb_ingest_runs`, `/v1/sb/*` read API, tests | GameHub | **GameHub push access**; deploy needs woz-accounts live |
 | **2 · Read-only tabs** | News, Scorecard results, Players, Favorites + onboarding; offline "as of" | this repo | — (runs against a local server) |
 | **3 · Pick'em (solo)** | Picks, draw option, locks, grading, history + chart | this repo | — |
@@ -347,7 +347,7 @@ room, and is in season. NFL fantasy is the biggest and riskiest feature.
 4. **Stripe:** a Price for `sportsbook`, added to `APP_PRICES`.
 5. **Licensed data provider** signup and key, as `fly secrets`, **before
    public launch**.
-6. **Name, colour and icon** (D8).
+6. **Final display name** (D8). Colours and icon are decided.
 7. **Real-device checks:** iOS join flow, install, a multi-phone draft.
 
 ## Decision log
@@ -361,4 +361,4 @@ room, and is in season. NFL fantasy is the biggest and riskiest feature.
 | D5 | Native proximity | No; share sheet + QR + code |
 | D6 | News | RSS headlines linking out; no article bodies |
 | D7 | Server | Inside `woz-accounts`, with a separate `ingest` process group |
-| D8 | Display name, colour, icon | **Open.** Placeholder "Sportsbook" until decided |
+| D8 | Display name, colour, icon | Colours **green, white, brown, gold**, in that order of weight. Icon: **a football on a green field**. Name "Sportsbook" for now |

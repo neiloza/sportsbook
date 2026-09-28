@@ -1,0 +1,68 @@
+/*
+ * The sign-in sheet. Styled entirely from tokens.css, so an app that retheme
+ * its palette gets a sign-in sheet that matches without touching this file.
+ */
+
+.account-form { display: flex; flex-direction: column; gap: 14px; }
+
+.account-field { display: flex; flex-direction: column; gap: 6px; }
+.account-label { font-size: 0.85rem; font-weight: 700; color: var(--ink-soft); }
+
+.input {
+  font: inherit;
+  color: var(--ink);
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  /* 44px floor — thumbs, not cursors. */
+  min-height: 44px;
+  padding: 10px 12px;
+  width: 100%;
+}
+.input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.account-or {
+  display: flex; align-items: center; gap: 12px;
+  margin: 16px 0 4px;
+  color: var(--ink-faint); font-size: 0.8rem; text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.account-or::before, .account-or::after {
+  content: ""; flex: 1 1 0; height: 1px; background: var(--line);
+}
+
+.account-google { font-weight: 700; }
+
+.account-who  { margin: 4px 0 2px; font-weight: 800; font-size: 1.05rem; }
+.account-sub  { margin: 0 0 14px; color: var(--ink-soft); font-size: 0.9rem; }
+
+.account-badge {
+  margin: 0 0 16px; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  color: var(--ink-soft); font-size: 0.9rem;
+}
+.account-badge.is-paid {
+  border-color: color-mix(in srgb, var(--good) 40%, transparent);
+  color: var(--good);
+}
+
+.account-note {
+  margin: 2px 0 0;
+  color: var(--ink-faint);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.account-sent { margin: 8px 0 6px; font-size: 1.1rem; font-weight: 800; text-align: center; }
+
+.account-error {
+  margin: 0;
+  color: var(--bad);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+.account-error[hidden] { display: none; }
+
+/* Stack the buttons with a little air, without a wrapper element. */
+.sheet-body > .btn + .btn { margin-top: 8px; }
+.sheet-body > .account-form + .btn { margin-top: 12px; }

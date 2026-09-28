@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><rect width="512" height="512" fill="#1f5f3b"/><!-- Sportsbook mark: a football on a green field (decided 2026-09-28).
+       Full-bleed and opaque; the ball and every line that matters stay
+       inside the centre 80% so the maskable crop never clips them. The ball's
+       tips are 150px from the centre, well inside the 205px safe circle.
+
+       The mowing stripes are deliberately low-contrast (two greens a few
+       steps apart). build-icons.cjs shrinks the whole mark to 78% on a flat
+       plate for the maskable copy, so the stripes stop short of the edge
+       there; kept subtle, that edge is invisible under a launcher's crop.
+       Make them bolder and it turns into a visible frame. -->
+  <defs>
+    <clipPath id="ball">
+      <path d="M-150 0 A172 172 0 0 1 150 0 A172 172 0 0 1 -150 0 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- turf -->
+  <rect width="512" height="512" fill="#1f5f3b"/>
+  <g fill="#246a43">
+    <rect x="0"   y="0" width="64" height="512"/>
+    <rect x="128" y="0" width="64" height="512"/>
+    <rect x="256" y="0" width="64" height="512"/>
+    <rect x="384" y="0" width="64" height="512"/>
+  </g>
+
+  <!-- chalk: two yard lines and their hash marks -->
+  <g fill="#ffffff" opacity="0.92">
+    <rect x="91"  y="0" width="10" height="512"/>
+    <rect x="411" y="0" width="10" height="512"/>
+    <rect x="236" y="70"  width="40" height="7"/>
+    <rect x="236" y="435" width="40" height="7"/>
+  </g>
+
+  <!-- the ball, tilted like it is mid-spiral -->
+  <!-- The ball is a LENS: two circular arcs meeting in points. Tried and
+       rejected: cubic outlines, which either rounded the tips into an egg
+       or straightened the flanks into a lemon. The lens is also how the
+       ball reads at 16px. -->
+  <g transform="translate(256 256) rotate(-35)">
+    <!-- shadow on the grass: an opaque darker green, not a transparent black,
+         so the PNG stays byte-opaque -->
+    <path transform="translate(10 16)" fill="#174a2e"
+          d="M-150 0 A172 172 0 0 1 150 0 A172 172 0 0 1 -150 0 Z"/>
+
+    <path fill="#7a4a26" d="M-150 0 A172 172 0 0 1 150 0 A172 172 0 0 1 -150 0 Z"/>
+    <!-- leather highlight, clipped to the ball -->
+    <g clip-path="url(#ball)">
+      <ellipse cx="-6" cy="-46" rx="110" ry="30" fill="#8e5a31"/>
+      <!-- the white end bands -->
+      <rect x="-106" y="-120" width="13" height="240" fill="#ffffff"/>
+      <rect x="93"   y="-120" width="13" height="240" fill="#ffffff"/>
+    </g>
+    <path fill="none" stroke="#4e2e16" stroke-width="6"
+          d="M-150 0 A172 172 0 0 1 150 0 A172 172 0 0 1 -150 0 Z"/>
+
+    <!-- laces -->
+    <g stroke="#ffffff" stroke-width="8" stroke-linecap="round">
+      <line x1="-52" y1="0" x2="52" y2="0"/>
+      <line x1="-40" y1="-16" x2="-40" y2="16"/>
+      <line x1="-20" y1="-16" x2="-20" y2="16"/>
+      <line x1="0"   y1="-16" x2="0"   y2="16"/>
+      <line x1="20"  y1="-16" x2="20"  y2="16"/>
+      <line x1="40"  y1="-16" x2="40"  y2="16"/>
+    </g>
+  </g></svg>

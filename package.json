@@ -1,0 +1,15 @@
+{
+  "name": "sportsbook",
+  "private": true,
+  "type": "module",
+  "//": "Dev-only. There are no runtime dependencies and no build step — the browser loads the files in this repo as they are. This file exists so the test runner and the icon builder are PINNED rather than installed ad hoc, which is how a tool stops working a year later. Nothing here ships to the browser.",
+  "scripts": {
+    "test": "node test/smoke.mjs",
+    "icons": "node icons/build-icons.cjs",
+    "serve": "python3 -m http.server 8000"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "playwright": "^1.49.0"
+  }
+}
