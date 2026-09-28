@@ -21,7 +21,12 @@
  * clearing site data.
  */
 
-var CACHE = "sportsbook-v1";
+var CACHE = "sportsbook-v2";
+
+/* The API cache is written by the PAGE (js/api.js) and must outlive every
+ * deploy: it is the offline copy of the last scores and headlines. The
+ * activate handler below deletes every cache except this one and CACHE. */
+var DATA_CACHE = "sportsbook-data";
 
 var SHELL = [
   "./",
@@ -38,6 +43,19 @@ var SHELL = [
   "./js/account.js",
   "./js/account-ui.js",
   "./js/sync.js",
+  "./js/api.js",
+  "./js/dom.js",
+  "./js/logic.js",
+  "./js/sports.js",
+  "./js/views/news.js",
+  "./js/views/scorecard.js",
+  "./js/views/favorites.js",
+  "./js/views/fantasy.js",
+  "./js/views/players.js",
+  "./js/views/settings.js",
+  "./js/views/details.js",
+  "./js/views/leagues.js",
+  "./js/vendor/qrcode.mjs",
   "./manifest.webmanifest",
   "./icons/favicon.svg",
   "./icons/apple-touch-icon.png",
@@ -62,7 +80,7 @@ self.addEventListener("activate", function (e) {
   e.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(keys.map(function (k) {
-        if (k !== CACHE) return caches.delete(k);
+        if (k !== CACHE && k !== DATA_CACHE) return caches.delete(k);
       }));
     }).then(function () { return self.clients.claim(); })
   );

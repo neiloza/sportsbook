@@ -6,7 +6,7 @@
        indicator, and CSS reserves those strips with env(safe-area-inset-*).
        Without it you get letterboxing on a notched phone. -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="TODO: one sentence, what it does for you">
+  <meta name="description" content="Scores, results, player stats, pick'em and fantasy for NFL and soccer, on your phone.">
   <!-- Matches the very top of the app background, so iOS tints the status
        bar strip the same colour as the page. That is the white --bg, NOT the
        brand green: the chrome is white on purpose (see css/tokens.css). -->
@@ -37,21 +37,6 @@
   <link rel="stylesheet" href="./css/account.css">
   <link rel="stylesheet" href="./css/app.css">
 
-  <!-- Theme applied before first paint, so a themed app never flashes the
-       default palette. Delete this block if the app has one theme. -->
-  <script>
-    (function () {
-      try {
-        var raw = localStorage.getItem("sportsbook:v1");
-        if (!raw) return;
-        var data = JSON.parse(raw);
-        var allowed = ["night"];
-        if (data && data.settings && allowed.indexOf(data.settings.theme) >= 0) {
-          document.documentElement.setAttribute("data-theme", data.settings.theme);
-        }
-      } catch (e) {}
-    })();
-  </script>
 </head>
 <body>
 
@@ -180,6 +165,20 @@
         <button class="icon-btn" data-sheet-close aria-label="Close">✕</button>
       </div>
       <div class="sheet-body" id="account-body"></div>
+    </div>
+  </div>
+
+  <!-- The one sheet every detail opens in: a game, a player, a team, a
+       league, the squad-name form. Its body is rebuilt each time; see
+       ctx.openDetail in js/app.js. -->
+  <div class="overlay" id="detail-sheet" hidden>
+    <div class="overlay-backdrop" data-sheet-close></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+      <div class="sheet-head">
+        <h2 class="sheet-title" id="detail-title">Details</h2>
+        <button class="icon-btn" data-sheet-close aria-label="Close">✕</button>
+      </div>
+      <div class="sheet-body" id="detail-body"></div>
     </div>
   </div>
 

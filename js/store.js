@@ -25,8 +25,33 @@ function defaultState() {
   return {
     v: VERSION,
     createdAt: Date.now(),
-    settings: { sound: true },
-    // ...your app's state
+    settings: {
+      // `sound` is unused by Sportsbook but kept: the kit's smoke test
+      // round-trips it to prove the store works, and a key nobody reads costs
+      // nothing. Deleting it breaks four shell checks for no gain.
+      sound: true,
+      newsComp: "all",          // News tab filter chip
+      scorecardMode: "results", // "results" | "pickem"
+      fantasyMode: "squad",     // "squad" | "leagues"
+    },
+
+    /* Favorites: DECISIONS, not content (house rule 5). Each kind is a map of
+     * id -> { on, at }. A removal is a tombstone ({ on: false, at }) rather
+     * than a deleted key, because cloud save merges by union: with the key
+     * simply gone, the other device's copy would bring the favourite straight
+     * back. The merge in app.js keeps whichever side has the newer `at`. */
+    favorites: { teams: {}, players: {}, events: {}, comps: {} },
+
+    /* Solo pick'em. eventId -> { pick, at, comp, season, week, start_time,
+     * home, away, result }. home/away are the abbreviations at pick time so
+     * history can render without refetching. `result` is written once, when
+     * the app first sees the game final: "correct" | "wrong" | "void". */
+    picks: {},
+
+    /* The squad game's anonymous identity. The token is a credential for the
+     * handle only (it can post lineups under that nickname, nothing else);
+     * it lives here so Download backup carries it to a new phone. */
+    squad: { handle: null },
   };
 }
 
@@ -99,7 +124,25 @@ export function loadState() {
 
   // Merge over the defaults so a field added since this save was written
   // exists rather than being undefined at every read site.
-  return { ...defaultState(), ...migrated, v: VERSION };
+  return normalise(migrated);
+}
+
+/* Spread the defaults UNDER the stored state (CLAUDE.md invariant), one
+ * level deeper for the objects whose keys the app reads directly, so a field
+ * added to `settings` or a new favourite kind exists on an old save instead
+ * of being undefined at every read site. */
+function normalise(saved) {
+  const d = defaultState();
+  const obj = (v) => (v && typeof v === "object" && !Array.isArray(v) ? v : {});
+  return {
+    ...d,
+    ...saved,
+    v: VERSION,
+    settings: { ...d.settings, ...obj(saved.settings) },
+    favorites: { ...d.favorites, ...obj(saved.favorites) },
+    picks: obj(saved.picks),
+    squad: { ...d.squad, ...obj(saved.squad) },
+  };
 }
 
 export function saveState(state) {
@@ -150,7 +193,7 @@ export function importState(json) {
     const parsed = JSON.parse(json);
     if (!parsed || parsed.app !== APP) return null;
     const migrated = migrate(parsed.state);
-    return migrated ? { ...defaultState(), ...migrated, v: VERSION } : null;
+    return migrated ? normalise(migrated) : null;
   } catch {
     return null;
   }

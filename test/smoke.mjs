@@ -347,6 +347,157 @@ check("palette: green accent, gold, brown, white",
   palette.brown === "rgb(122, 74, 38)" && palette.bg === "rgb(251, 250, 246)",
   JSON.stringify(palette));
 
+/* ------------------------------------------------------------------------
+ * The screens, against a stub of the Sportsbook API (test/fixtures/sb-api.mjs
+ * — read its header: it guards the app against drifting from docs/API.md
+ * and proves nothing about the real server).
+ *
+ * Routes registered later win in Playwright, so this overrides the refusing
+ * accounts stub above for as long as `sbReachable` is true.
+ * ---------------------------------------------------------------------- */
+
+const { createSbStub } = await import("./fixtures/sb-api.mjs");
+const stub = createSbStub({ demo: true });
+let sbReachable = true;
+await ctx.route("**/api.thewizardofoza.com/**", async (route) => {
+  if (!sbReachable) return route.abort("failed");
+  const req = route.request();
+  let body = null;
+  try { body = req.postDataJSON(); } catch { /* no body */ }
+  const { status, json } = stub.handler(req.url(), req.method(), body, req.headers());
+  return route.fulfill({
+    status, contentType: "application/json", body: JSON.stringify(json),
+    headers: { "access-control-allow-origin": new URL(base).origin, "access-control-allow-credentials": "true" },
+  });
+});
+
+const readState = () => page.evaluate(() => JSON.parse(localStorage.getItem("sportsbook:v1") || "{}"));
+const tab = (name) => page.locator(`.tab[data-view="${name}"]`).click();
+
+await page.evaluate(() => localStorage.clear());
+await page.goto(base, { waitUntil: "networkidle" });
+
+console.log("\nfavorites");
+await page.locator("#view-favorites .team-toggle").first().waitFor();
+check("first launch onboards: the team picker shows every team",
+  (await page.locator("#view-favorites .team-toggle").count()) === 4);
+check("the demo banner shows while the server is on demo data",
+  await page.locator("#view-favorites .demo-banner").isVisible());
+await page.locator("#view-favorites .team-toggle", { hasText: "Chiefs" }).click();
+check("starring a team is saved as a decision with a timestamp",
+  (await readState()).favorites?.teams?.["12"]?.on === true);
+await page.locator("#view-favorites button", { hasText: "Show my favorites" }).click();
+await page.locator("#view-favorites .fav-team").first().waitFor();
+check("the feed leads with the starred team and its games",
+  (await page.locator("#view-favorites .fav-team-name").first().textContent()) === "Kansas City Chiefs" &&
+  (await page.locator("#view-favorites .fav-team .event-card").count()) >= 1);
+
+console.log("\nnews");
+await tab("news");
+await page.locator("#view-news .headline").first().waitFor();
+check("scores and headlines render",
+  (await page.locator("#view-news .event-card").count()) === 2 &&
+  (await page.locator("#view-news .headline").count()) === 2);
+check("a live game is listed first and marked live",
+  await page.locator("#view-news .event-card").first().evaluate((n) => n.classList.contains("is-live")));
+check("a headline is rendered as text, never as markup",
+  (await page.locator("#view-news .headline img").count()) === 0 &&
+  (await page.evaluate(() => window.__xss)) === undefined &&
+  (await page.locator("#view-news .headline-title").nth(1).textContent()).startsWith("<img"));
+await page.locator("#view-news .chip", { hasText: "NFL" }).click();
+check("the sport filter is remembered",
+  (await readState()).settings?.newsComp === "nfl");
+
+console.log("\nscorecard & pick'em");
+await tab("scorecard");
+await page.locator("#view-scorecard .section-head", { hasText: "Week 3" }).waitFor();
+check("results are grouped by week",
+  (await page.locator("#view-scorecard .event-card").count()) === 2);
+// A pick made before the game, on a game that is now final, must grade.
+await page.evaluate(() => {
+  const s = JSON.parse(localStorage.getItem("sportsbook:v1"));
+  s.picks.e301 = { pick: "home", at: 1, comp: "nfl", season: 2026, week: 3, start_time: "2026-01-01T00:00:00Z", home: "KC", away: "BUF" };
+  localStorage.setItem("sportsbook:v1", JSON.stringify(s));
+});
+await page.reload({ waitUntil: "networkidle" });
+await tab("scorecard");
+await page.locator("#view-scorecard .seg", { hasText: "Pick'em" }).click();
+await page.locator("#view-scorecard .pick-btn").first().waitFor();
+check("a past pick is graded against the final score",
+  (await readState()).picks?.e301?.result === "correct");
+await page.locator("#view-scorecard .pick-row").first().locator(".pick-btn", { hasText: "PHI" }).click();
+check("making a pick saves it with the game's context",
+  (await readState()).picks?.e401?.pick === "home" && (await readState()).picks?.e401?.week === 4);
+check("the record card counts graded picks",
+  (await page.locator("#view-scorecard .stat-value").first().textContent()) === "1–0");
+check("leagues are offered, not opened, without Premium",
+  await page.locator("#view-scorecard .upsell").isVisible());
+
+console.log("\nplayers");
+await tab("players");
+await page.locator("#view-players input[type=search]").fill("jal");
+await page.locator("#view-players .player-row").first().waitFor();
+check("search finds a player by name prefix",
+  (await page.locator("#view-players .player-row").count()) === 1);
+await page.locator("#view-players .player-row").first().click();
+await page.locator("#detail-sheet .stat-tile").first().waitFor();
+check("a player opens in the detail sheet with season stats",
+  (await page.locator("#detail-title").textContent()) === "Jalen Stone");
+await page.keyboard.press("Escape");
+check("Escape closes the detail sheet", !(await page.locator("#detail-sheet").isVisible()));
+
+console.log("\nfantasy");
+await tab("fantasy");
+await page.locator("#view-fantasy .slot-row").first().waitFor();
+check("the squad builder shows eight slots", (await page.locator("#view-fantasy .slot-row").count()) === 8);
+await page.locator("#view-fantasy .slot-pick").first().click();
+await page.locator("#detail-sheet .picker-row").first().waitFor();
+check("the QB picker lists only quarterbacks",
+  (await page.locator("#detail-sheet .picker-row").count()) === 2);
+await page.locator("#detail-sheet .picker-row", { hasText: "Jalen Stone" }).click();
+await page.locator("#view-fantasy .slot-name").first().waitFor();
+check("choosing a player fills the slot and spends budget",
+  (await page.locator("#view-fantasy .slot-name").first().textContent()) === "Jalen Stone" &&
+  (await page.locator("#view-fantasy .budget-bar").textContent()).includes("88.5"));
+
+console.log("\ninvites");
+await page.goto(`${base}?join=k7q2mx`, { waitUntil: "networkidle" });
+await page.locator("#detail-sheet .benefits").waitFor();
+check("an invite link without Premium explains the unlock instead of failing",
+  (await page.locator("#detail-title").textContent()) === "Premium" && !page.url().includes("join="));
+await page.keyboard.press("Escape");
+
+console.log("\npremium leagues");
+stub.premium = true;
+await page.reload({ waitUntil: "networkidle" });
+await tab("fantasy");
+await page.locator("#view-fantasy .seg", { hasText: "Leagues" }).click();
+await page.locator("#view-fantasy button", { hasText: "Create league" }).waitFor();
+check("with Premium, leagues can be created instead of offered",
+  (await page.locator("#view-fantasy .upsell").count()) === 0);
+await page.locator("#view-fantasy button", { hasText: "Create league" }).click();
+await page.locator("#detail-sheet input").fill("Sunday Crew");
+await page.locator("#detail-sheet button[type=submit]").click();
+await page.locator("#detail-sheet .invite-code").waitFor();
+await page.locator("#detail-sheet .qr-box svg").waitFor();
+check("a new league shows its invite code and a QR code to scan",
+  (await page.locator("#detail-sheet .invite-code").textContent()) === "K7Q2MX" &&
+  (await page.locator("#detail-sheet .qr-box svg").count()) === 1);
+await page.keyboard.press("Escape");
+stub.premium = false;
+await page.reload({ waitUntil: "networkidle" });
+
+console.log("\noffline");
+await tab("news");
+await page.locator("#view-news .headline").first().waitFor();
+sbReachable = false;
+await page.reload({ waitUntil: "networkidle" });
+await tab("news");
+await page.locator("#view-news .as-of.stale").first().waitFor({ timeout: 25000 });
+check("with the API unreachable, News shows the last good copy, marked offline",
+  (await page.locator("#view-news .headline").count()) === 2);
+sbReachable = true;
+
 console.log("\nerrors");
 check("no console errors, page errors or 4xx", problems.length === 0,
   problems.slice(0, 4).join(" | "));
@@ -359,6 +510,17 @@ check("no console errors, page errors or 4xx", problems.length === 0,
   server?.close();
 }
 
+/*
+ * A FLOOR, not a total. A run that dies half way still prints a tally, and
+ * "51/52 passed" reads almost exactly like a healthy run — it is what a
+ * broken offline cache looked like when that was tried on purpose. Raise
+ * this whenever you add checks.
+ */
+const EXPECTED_CHECKS = 55;
 const failed = results.filter((r) => !r.pass);
 console.log(`\n${results.length - failed.length}/${results.length} passed\n`);
+if (results.length < EXPECTED_CHECKS) {
+  console.log(`FAIL  only ${results.length} checks ran; expected at least ${EXPECTED_CHECKS}\n`);
+  process.exit(1);
+}
 process.exit(failed.length ? 1 : 0);
